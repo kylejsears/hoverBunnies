@@ -1,3 +1,10 @@
+/*
+ * Code to control a hovercraft via bluetooth connection w/ a PS4 controller
+ * Original setup uses Arduino Uno + Arduino USB Host Shield + OSEPP Motor and Servo Shield
+ * Written by: Kyle Sears
+ * PS4BT example sketch used to create a connection w/ controller
+ */
+ 
 //PS4BT example sketch by Kristian Lauszus gives framework for PS4 controller connection
 #include <PS4BT.h>
 #include <usbhub.h>
@@ -10,7 +17,9 @@
 #include <spi4teensy3.h>
 #include <SPI.h>
 #endif
-
+/*
+ * Initializing objects
+ */
 USB usb; //usb instance
 BTD Btd(&usb); // bluetooth dongle instance at usb port
 //PS4BT PS4(&Btd, PAIR); //uncomment if a new controller is going to be paired
@@ -26,11 +35,18 @@ int steeringPos = 90;
 int payloadPos = 0;
 int drop = 60;
 
+//variables for timing
+long next_time = 0;
+long next_time01 = 0;
+long next_time02 = 0;
+
 void setup() {
   Serial.begin(115200);
-#if !defined(__MIPSEL__)
-  while (!Serial); // Wait for serial port to connect - used on Leonardo, Teensy and other boards with built-in USB CDC serial connection
-#endif
+
+  
+  #if !defined(__MIPSEL__)
+   while (!Serial); // Wait for serial port to connect - used on Leonardo, Teensy and other boards with built-in USB CDC serial connection
+  #endif
 
   leftThrust.setSpeed(0);
   rightThrust.setSpeed(0);
@@ -47,6 +63,45 @@ void setup() {
   Serial.print(F("\r\nPS4 Bluetooth Library Started"));
 }
 void loop() {
+  usb.Task();
+
+  //will run as long as controller is connected
+  if (PS4.connected()){
+
+    long current_time = millis();
+
+    /*
+     * Steering control
+     */
+    if (next_time < current_time){
+      next_time = current_time + 500;
+     
+      if (PS4.getAnalogHat(LeftHatX) > 137){
+         steeringPos += 22;
+         steeringServo.write(steeringPos);
+         Serial.print(F("\r\nright"));
+      }
+      if (PS4.getAnalogHat(LeftHatX) < 117){
+          steeringPos -= 22;
+          steeringServo.write(steeringPos);
+          Serial.print(F("\r\nleft"));
+      }
+    }
+    
+    /*
+     * Thrust Control
+     */
+    if (next_time01 < current_time){
+      next_time01 = current_time + 500;
+
+      if (PS4.getAnalogButton(R2) != oldR2Value){
+        Serial.print(F("\r\nChanging speed"));
+        oldR2Value = PS4.getAnalogButton(R2);
+        leftThrust.setSpeed(oldR2Value);
+        rightThrust.setSpeed(oldR2Value);
+      }
+    }
+ }  
   usb.Task();
 
   if (PS4.connected()){
