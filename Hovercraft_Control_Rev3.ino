@@ -3,6 +3,7 @@
  * Original setup uses Arduino Uno + Arduino USB Host Shield + OSEPP Motor and Servo Shield
  * Written by: Kyle Sears
  * PS4BT example sketch used to create a connection w/ controller
+ * Problems: Controller does connect, however input from controller fails to be read
  */
  
 //PS4BT example sketch by Kristian Lauszus gives framework for PS4 controller connection
